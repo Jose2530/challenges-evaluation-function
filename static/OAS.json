@@ -1,0 +1,725 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Challenges Evaluation Function",
+    "version": "1.0.0",
+    "description": "API para autenticación, gestión de retos por tipo, ejecución de código y evaluación de soluciones."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8001",
+      "description": "Servidor local de desarrollo"
+    }
+  ],
+  "paths": {
+    "/V1/auth/register": {
+      "post": {
+        "summary": "Registrar usuario",
+        "description": "Crea un usuario con rol admin o candidate.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado correctamente"
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "409": {
+            "description": "El usuario ya existe"
+          }
+        }
+      }
+    },
+    "/V1/auth/login": {
+      "post": {
+        "summary": "Login de usuario",
+        "description": "Valida credenciales y devuelve un JWT con el tipo de usuario.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login exitoso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales inválidas"
+          }
+        }
+      }
+    },
+    "/V1/assessments": {
+      "post": {
+        "summary": "Crear assessment",
+        "description": "Crea un assessment asociado a una o varias preguntas.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assessment creado correctamente"
+          },
+          "400": {
+            "description": "Datos inválidos"
+          }
+        }
+      }
+    },
+    "/V1/assessments/list": {
+      "get": {
+        "summary": "Listar assessments",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de assessments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Assessment"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/V1/assessments/{id}": {
+      "get": {
+        "summary": "Obtener assessment por ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assessment encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assessment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Assessment no encontrado"
+          }
+        }
+      }
+    },
+    "/V1/questions": {
+      "post": {
+        "summary": "Crear reto",
+        "description": "Crea un reto por tipo: java, cloud o fullstack.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuestionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reto creado"
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "403": {
+            "description": "No autorizado"
+          }
+        }
+      }
+    },
+    "/V1/questions/list": {
+      "get": {
+        "summary": "Listar retos",
+        "description": "Lista retos, pudiendo filtrar por challengeType.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "challengeType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["java", "cloud", "fullstack"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de retos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Question"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/V1/questions/{id}": {
+      "get": {
+        "summary": "Obtener reto por id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reto encontrado"
+          },
+          "404": {
+            "description": "No encontrado"
+          }
+        }
+      }
+    },
+    "/V1/execution": {
+      "post": {
+        "summary": "Ejecutar código del candidato",
+        "description": "Ejecuta código en Docker usando el lenguaje indicado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecutionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ejecución completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/V1/hint": {
+      "post": {
+        "summary": "Ejecutar código del candidato",
+        "description": "Ejecuta código en Docker usando el lenguaje indicado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {}
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ejecución completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/V1/challenges/generate": {
+      "post": {
+        "summary": "Ejecutar código del candidato",
+        "description": "Ejecuta código en Docker usando el lenguaje indicado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {}
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ejecución completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/V1/evaluation": {
+      "post": {
+        "summary": "Evaluar una pregunta",
+        "description": "Evalúa la solución de un reto frente a sus test cases.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {}
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Evaluación realizada"
+          }
+        }
+      }
+    },
+    "/V1/evaluation/assessment": {
+      "post": {
+        "summary": "Evaluar assessment completo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateAssessmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assessment evaluado"
+          }
+        }
+      }
+    },
+    "/V1/evaluation/list": {
+      "get": {
+        "summary": "Listar evaluaciones",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de evaluaciones"
+          }
+        }
+      }
+    },
+    "/V1/evaluation/{id}": {
+      "get": {
+        "summary": "Obtener evaluación por id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evaluación encontrada"
+          },
+          "404": {
+            "description": "No encontrada"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["name", "email", "password", "userType"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "userType": {
+            "type": "string",
+            "enum": ["admin", "candidate"]
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "userType": {
+                "type": "string",
+                "enum": ["admin", "candidate"]
+              },
+              "user": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "userType": {
+                    "type": "string",
+                    "enum": ["admin", "candidate"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateAssessmentRequest": {
+        "type": "object",
+        "required": ["name", "description", "durationMinutes", "questionIds"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "questionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Assessment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "durationMinutes": {
+            "type": "integer"
+          },
+          "questionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateQuestionTestCase": {
+        "type": "object",
+        "required": ["input", "expectedOutput", "hidden", "weight"],
+        "properties": {
+          "input": {
+            "type": "string"
+          },
+          "expectedOutput": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "weight": {
+            "type": "number"
+          }
+        }
+      },
+      "CreateQuestionRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "challengeType",
+          "allowedLanguages",
+          "score",
+          "testCases"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "challengeType": {
+            "type": "string",
+            "enum": ["java", "cloud", "fullstack"]
+          },
+          "allowedLanguages": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["javascript", "python", "java", "typescript"]
+            }
+          },
+          "score": {
+            "type": "number"
+          },
+          "testCases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateQuestionTestCase"
+            }
+          }
+        }
+      },
+      "Question": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "challengeType": {
+            "type": "string",
+            "enum": ["java", "cloud", "fullstack"]
+          },
+          "allowedLanguages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "score": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ExecutionRequest": {
+        "type": "object",
+        "required": ["language", "code", "input"],
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": ["javascript", "python", "java"]
+          },
+          "code": {
+            "type": "string"
+          },
+          "input": {
+            "type": "string"
+          }
+        }
+      },
+      "ExecutionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "executionTimeMs": {
+            "type": "number"
+          }
+        }
+      },
+      "EvaluateQuestionRequest": {
+        "type": "object",
+        "required": ["question", "code", "language"],
+        "properties": {
+          "question": {
+            "$ref": "#/components/schemas/Question"
+          },
+          "code": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "enum": ["javascript", "python", "java"]
+          }
+        }
+      },
+      "EvaluateAssessmentRequest": {
+        "type": "object",
+        "required": ["assessmentId", "codeByQuestion", "language"],
+        "properties": {
+          "assessmentId": {
+            "type": "string"
+          },
+          "codeByQuestion": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "string",
+            "enum": ["javascript", "python", "java"]
+          }
+        }
+      }
+    }
+  }
+}

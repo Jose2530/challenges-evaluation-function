@@ -7,15 +7,34 @@
     "rootDir": "./src" /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */,
     "strict": true /* Enable all strict type-checking options. */,
     "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
-    "types": ["reflect-metadata", "mocha", "node"] /* Type declaration files to be included in compilation. */,
+    "types": [
+      "reflect-metadata",
+      "node",
+      "mocha"
+    ] /* Type declaration files to be included in compilation. */,
     "resolveJsonModule": true,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     "experimentalDecorators": true /* Enables experimental support for ES7 decorators. */,
     "emitDecoratorMetadata": true /* Enables experimental support for emitting type metadata for decorators. */,
     "skipLibCheck": true /* Skip type checking of declaration files. */,
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "paths": {
+      "@routers/*": ["infrastructure/routers/*"],
+      "@controllers/*": ["infrastructure/controllers/*"],
+      "@services/*": ["application/services/*"],
+      "@mappers/*": ["application/mappers/*"],
+      "@constants/*": ["domain/constants/*"],
+      "@enums/*": ["domain/enums/*"],
+      "@domain/*": ["domain/*"]
+    }
   },
-  "include": ["./src", "test/**/*"],
-  "exclude": ["./node_modules", "./node_modules/*", "./node_modules/@types/node/index.d.ts", "**/*.test.ts", "**/*.mock.ts"]
+  "include": ["./src", "src/config.ts"],
+  "exclude": [
+    "./node_modules",
+    "./node_modules/*",
+    "./node_modules/@types/node/index.d.ts",
+    "**/*.test.ts",
+    "**/*.mock.ts"
+  ]
 }
